@@ -23,21 +23,24 @@ pub fn run(png: &Path) -> Result<(), String> {
     let t_0 = Instant::now();
 
     'mainloop: loop {
-        for event in sdl_context.event_pump()?.poll_iter() {
-            match event {
-                Event::Quit { .. } |
-                Event::KeyDown { keycode: Option::Some(Keycode::Escape), .. } =>
-                    break 'mainloop,
-                _ => {
-                    let frame = Instant::now().duration_since(t_0).as_millis() / 100 % 4;
-
-                    let src_rect = sdl2::rect::Rect::new(128 + 16 * frame as i32, 4, 16, 28);
-                    let dst_rect = sdl2::rect::Rect::new(0, 0, 16, 28);
-
-                    canvas.clear();
-                    canvas.copy(&texture, src_rect, dst_rect)?;
-                    canvas.present();
+        let event = sdl_context.event_pump()?.poll_event();
+        match event {
+            Some(event) =>
+                match event {
+                    Event::Quit { .. } |
+                    Event::KeyDown { keycode: Option::Some(Keycode::Escape), .. } =>
+                        break 'mainloop,
+                    _ => {}
                 }
+            None => {
+                let frame = Instant::now().duration_since(t_0).as_millis() / 100 % 4;
+
+                let src_rect = sdl2::rect::Rect::new(128 + 16 * frame as i32, 4, 16, 28);
+                let dst_rect = sdl2::rect::Rect::new(64, 112, 64, 112);
+
+                canvas.clear();
+                canvas.copy(&texture, src_rect, dst_rect)?;
+                canvas.present();
             }
         }
     }
