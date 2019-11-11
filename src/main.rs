@@ -2,6 +2,7 @@ extern crate sdl2;
 
 use std::env;
 use std::path::Path;
+use std::time::Instant;
 use sdl2::image::{LoadTexture, InitFlag};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -19,11 +20,7 @@ pub fn run(png: &Path) -> Result<(), String> {
     let texture_creator = canvas.texture_creator();
     let texture = texture_creator.load_texture(png)?;
 
-    let src_rect = sdl2::rect::Rect::new(16, 0, 16, 16);
-    let dst_rect = sdl2::rect::Rect::new(0, 0, 16, 16);
-
-    canvas.copy(&texture, src_rect, dst_rect)?;
-    canvas.present();
+    let t_0 = Instant::now();
 
     'mainloop: loop {
         for event in sdl_context.event_pump()?.poll_iter() {
@@ -31,7 +28,16 @@ pub fn run(png: &Path) -> Result<(), String> {
                 Event::Quit { .. } |
                 Event::KeyDown { keycode: Option::Some(Keycode::Escape), .. } =>
                     break 'mainloop,
-                _ => {}
+                _ => {
+                    let frame = Instant::now().duration_since(t_0).as_millis() / 100 % 4;
+
+                    let src_rect = sdl2::rect::Rect::new(128 + 16 * frame as i32, 4, 16, 28);
+                    let dst_rect = sdl2::rect::Rect::new(0, 0, 16, 28);
+
+                    canvas.clear();
+                    canvas.copy(&texture, src_rect, dst_rect)?;
+                    canvas.present();
+                }
             }
         }
     }
