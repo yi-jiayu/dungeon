@@ -11,22 +11,25 @@ pub fn run(png: &Path) -> Result<(), String> {
     let video_subsystem = sdl_context.video()?;
     let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
     let window = video_subsystem.window("rust-sdl2 demo: Video", 800, 600)
-      .position_centered()
-      .build()
-      .map_err(|e| e.to_string())?;
+        .position_centered()
+        .build()
+        .map_err(|e| e.to_string())?;
 
     let mut canvas = window.into_canvas().software().build().map_err(|e| e.to_string())?;
     let texture_creator = canvas.texture_creator();
     let texture = texture_creator.load_texture(png)?;
 
-    canvas.copy(&texture, None, None)?;
+    let src_rect = sdl2::rect::Rect::new(16, 0, 16, 16);
+    let dst_rect = sdl2::rect::Rect::new(0, 0, 16, 16);
+
+    canvas.copy(&texture, src_rect, dst_rect)?;
     canvas.present();
 
     'mainloop: loop {
         for event in sdl_context.event_pump()?.poll_iter() {
             match event {
-                Event::Quit{..} |
-                Event::KeyDown {keycode: Option::Some(Keycode::Escape), ..} =>
+                Event::Quit { .. } |
+                Event::KeyDown { keycode: Option::Some(Keycode::Escape), .. } =>
                     break 'mainloop,
                 _ => {}
             }
