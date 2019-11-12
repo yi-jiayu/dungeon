@@ -78,8 +78,8 @@ pub fn run() -> Result<(), String> {
     let mut facing = Facing::Right;
 
     'mainloop: loop {
-        match sdl_context.event_pump()?.poll_event() {
-            Some(event) => match event {
+        if let Some(event) = sdl_context.event_pump()?.poll_event() {
+            match event {
                 Event::Quit { .. } | keydown!(Escape) => break 'mainloop,
                 keydown!(Right) => {
                     velocity_x = 1;
@@ -102,8 +102,7 @@ pub fn run() -> Result<(), String> {
                     velocity_y = 0;
                 }
                 _ => {}
-            },
-            None => {}
+            }
         }
         let frame = Instant::now().duration_since(t_0).as_millis() / FRAME_DURATION % 4;
 
