@@ -3,9 +3,9 @@ Dungeon game using Rust and SDL2
 
 ## Getting started
 
-```
-cargo run 0x72_DungeonTilesetII_v1.1.png
-```
+- Ensure Rust is installed: https://rustup.rs/
+- Ensure SDL2 libraries are installed: `brew install sdl2 sdl2_image` (macOS)
+- `cargo run`
 
 ## Acknowledgements
 
