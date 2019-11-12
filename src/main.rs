@@ -4,6 +4,7 @@ use sdl2::event::Event;
 use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
+use sdl2::rect::Rect;
 use sdl2::render::TextureQuery;
 use std::path::Path;
 use std::time::Instant;
@@ -16,6 +17,13 @@ enum Facing {
     Left,
     Right,
 }
+
+// handle the annoying Rect i32
+macro_rules! rect (
+    ($x:expr, $y:expr, $w:expr, $h:expr) => (
+        Rect::new($x as i32, $y as i32, $w as u32, $h as u32)
+    )
+);
 
 pub fn run(png: &Path) -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -49,7 +57,7 @@ pub fn run(png: &Path) -> Result<(), String> {
         height: font_height,
         ..
     } = font_texture.query();
-    let font_rect = sdl2::rect::Rect::new(0, 0, font_width, font_height);
+    let font_rect = rect!(0, 0, font_width, font_height);
 
     let t_0 = Instant::now();
     let mut curr_x = 64;
@@ -120,8 +128,8 @@ pub fn run(png: &Path) -> Result<(), String> {
                 let frame = Instant::now().duration_since(t_0).as_millis() / FRAME_DURATION % 4;
 
                 let offset = if moving { 192 } else { 128 };
-                let src_rect = sdl2::rect::Rect::new(offset + 16 * frame as i32, 4, 16, 28);
-                let dst_rect = sdl2::rect::Rect::new(curr_x, curr_y, 64, 112);
+                let src_rect = rect!(offset + 16 * frame as i32, 4, 16, 28);
+                let dst_rect = rect!(curr_x, curr_y, 64, 112);
 
                 canvas.clear();
                 canvas.copy(&font_texture, None, font_rect)?;
