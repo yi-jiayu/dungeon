@@ -23,6 +23,8 @@ pub fn run(png: &Path) -> Result<(), String> {
     let texture = texture_creator.load_texture(png)?;
 
     let t_0 = Instant::now();
+    let mut curr_x = 64;
+    let mut curr_y = 112;
 
     'mainloop: loop {
         let event = sdl_context.event_pump()?.poll_event();
@@ -32,13 +34,25 @@ pub fn run(png: &Path) -> Result<(), String> {
                     Event::Quit { .. } |
                     Event::KeyDown { keycode: Option::Some(Keycode::Escape), .. } =>
                         break 'mainloop,
+                    Event::KeyDown { keycode: Option::Some(Keycode::Right), .. } => {
+                        curr_x += 4;
+                    }
+                    Event::KeyDown { keycode: Option::Some(Keycode::Left), .. } => {
+                        curr_x -= 4;
+                    }
+                    Event::KeyDown { keycode: Option::Some(Keycode::Down), .. } => {
+                        curr_y += 4;
+                    }
+                    Event::KeyDown { keycode: Option::Some(Keycode::Up), .. } => {
+                        curr_y -= 4;
+                    }
                     _ => {}
                 }
             None => {
                 let frame = Instant::now().duration_since(t_0).as_millis() / FRAME_DURATION % 4;
 
                 let src_rect = sdl2::rect::Rect::new(128 + 16 * frame as i32, 4, 16, 28);
-                let dst_rect = sdl2::rect::Rect::new(64, 112, 64, 112);
+                let dst_rect = sdl2::rect::Rect::new(curr_x, curr_y, 64, 112);
 
                 canvas.clear();
                 canvas.copy(&texture, src_rect, dst_rect)?;
