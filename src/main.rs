@@ -55,6 +55,7 @@ pub fn run(png: &Path) -> Result<(), String> {
     let mut curr_x = 64;
     let mut curr_y = 112;
     let mut facing = Facing::Right;
+    let mut moving = false;
 
     'mainloop: loop {
         let event = sdl_context.event_pump()?.poll_event();
@@ -71,6 +72,7 @@ pub fn run(png: &Path) -> Result<(), String> {
                 } => {
                     curr_x += 4;
                     facing = Facing::Right;
+                    moving = true;
                 }
                 Event::KeyDown {
                     keycode: Option::Some(Keycode::Left),
@@ -78,25 +80,47 @@ pub fn run(png: &Path) -> Result<(), String> {
                 } => {
                     curr_x -= 4;
                     facing = Facing::Left;
+                    moving = true;
                 }
                 Event::KeyDown {
                     keycode: Option::Some(Keycode::Down),
                     ..
                 } => {
                     curr_y += 4;
+                    moving = true;
                 }
                 Event::KeyDown {
                     keycode: Option::Some(Keycode::Up),
                     ..
                 } => {
                     curr_y -= 4;
+                    moving = true;
+                }
+                Event::KeyUp {
+                    keycode: Option::Some(Keycode::Up),
+                    ..
+                }
+                | Event::KeyUp {
+                    keycode: Option::Some(Keycode::Down),
+                    ..
+                }
+                | Event::KeyUp {
+                    keycode: Option::Some(Keycode::Left),
+                    ..
+                }
+                | Event::KeyUp {
+                    keycode: Option::Some(Keycode::Right),
+                    ..
+                } => {
+                    moving = false;
                 }
                 _ => {}
             },
             None => {
                 let frame = Instant::now().duration_since(t_0).as_millis() / FRAME_DURATION % 4;
 
-                let src_rect = sdl2::rect::Rect::new(128 + 16 * frame as i32, 4, 16, 28);
+                let offset = if moving { 192 } else { 128 };
+                let src_rect = sdl2::rect::Rect::new(offset + 16 * frame as i32, 4, 16, 28);
                 let dst_rect = sdl2::rect::Rect::new(curr_x, curr_y, 64, 112);
 
                 canvas.clear();
