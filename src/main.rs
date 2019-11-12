@@ -5,6 +5,8 @@ use std::time::Instant;
 use sdl2::image::{LoadTexture, InitFlag};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use sdl2::pixels::Color;
+use sdl2::render::TextureQuery;
 
 const TILESET_PATH: &str = "tileset.png";
 const FRAME_DURATION: u128 = 100;
@@ -13,6 +15,7 @@ pub fn run(png: &Path) -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
     let _image_context = sdl2::image::init(InitFlag::PNG)?;
+    let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
     let window = video_subsystem.window("rust-sdl2 demo: Video", 800, 600)
         .position_centered()
         .build()
@@ -21,6 +24,14 @@ pub fn run(png: &Path) -> Result<(), String> {
     let mut canvas = window.into_canvas().software().build().map_err(|e| e.to_string())?;
     let texture_creator = canvas.texture_creator();
     let texture = texture_creator.load_texture(png)?;
+
+    let font = ttf_context.load_font("mago1.ttf", 64)?;
+    let font_surface = font.render("Hello Rust!")
+        .blended(Color::RGBA(255, 0, 0, 255)).map_err(|e| e.to_string())?;
+    let font_texture = texture_creator.create_texture_from_surface(&font_surface)
+        .map_err(|e| e.to_string())?;
+    let TextureQuery { width: font_width, height: font_height, .. } = font_texture.query();
+    let font_rect = sdl2::rect::Rect::new(0, 0, font_width, font_height);
 
     let t_0 = Instant::now();
     let mut curr_x = 64;
@@ -55,6 +66,7 @@ pub fn run(png: &Path) -> Result<(), String> {
                 let dst_rect = sdl2::rect::Rect::new(curr_x, curr_y, 64, 112);
 
                 canvas.clear();
+                canvas.copy(&font_texture, None, font_rect)?;
                 canvas.copy(&texture, src_rect, dst_rect)?;
                 canvas.present();
             }
