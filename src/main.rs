@@ -75,58 +75,59 @@ pub fn run(png: &Path) -> Result<(), String> {
     let t_0 = Instant::now();
     let mut curr_x = 64;
     let mut curr_y = 112;
+    let mut velocity_x = 0;
+    let mut velocity_y = 0;
     let mut facing = Facing::Right;
-    let mut moving = false;
 
     'mainloop: loop {
-        let event = sdl_context.event_pump()?.poll_event();
-        match event {
+        match sdl_context.event_pump()?.poll_event() {
             Some(event) => match event {
                 Event::Quit { .. } | keydown!(Escape) => break 'mainloop,
                 keydown!(Right) => {
-                    curr_x += 4;
+                    velocity_x = 1;
                     facing = Facing::Right;
-                    moving = true;
                 }
                 keydown!(Left) => {
-                    curr_x -= 4;
+                    velocity_x = -1;
                     facing = Facing::Left;
-                    moving = true;
                 }
                 keydown!(Down) => {
-                    curr_y += 4;
-                    moving = true;
+                    velocity_y = 1;
                 }
                 keydown!(Up) => {
-                    curr_y -= 4;
-                    moving = true;
+                    velocity_y = -1;
                 }
-                keyup!(Up) | keyup!(Down) | keyup!(Left) | keyup!(Right) => {
-                    moving = false;
+                keyup!(Left) | keyup!(Right) => {
+                    velocity_x = 0;
+                }
+                keyup!(Up) | keyup!(Down) => {
+                    velocity_y = 0;
                 }
                 _ => {}
             },
-            None => {
-                let frame = Instant::now().duration_since(t_0).as_millis() / FRAME_DURATION % 4;
-
-                let offset = if moving { 192 } else { 128 };
-                let src_rect = rect!(offset + 16 * frame as i32, 4, 16, 28);
-                let dst_rect = rect!(curr_x, curr_y, 64, 112);
-
-                canvas.clear();
-                canvas.copy(&font_texture, None, font_rect)?;
-                canvas.copy_ex(
-                    &texture,
-                    src_rect,
-                    dst_rect,
-                    0.,
-                    None,
-                    facing == Facing::Left,
-                    false,
-                )?;
-                canvas.present();
-            }
+            None => {}
         }
+        let frame = Instant::now().duration_since(t_0).as_millis() / FRAME_DURATION % 4;
+
+        curr_x += 2 * velocity_x;
+        curr_y += 2 * velocity_y;
+        let moving = velocity_x > 0 || velocity_y > 0;
+        let offset = if moving { 192 } else { 128 };
+        let src_rect = rect!(offset + 16 * frame as i32, 4, 16, 28);
+        let dst_rect = rect!(curr_x, curr_y, 64, 112);
+
+        canvas.clear();
+        canvas.copy(&font_texture, None, font_rect)?;
+        canvas.copy_ex(
+            &texture,
+            src_rect,
+            dst_rect,
+            0.,
+            None,
+            facing == Facing::Left,
+            false,
+        )?;
+        canvas.present();
     }
 
     Ok(())
