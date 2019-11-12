@@ -1,16 +1,18 @@
 extern crate sdl2;
 
-use std::env;
 use std::path::Path;
 use std::time::Instant;
 use sdl2::image::{LoadTexture, InitFlag};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
+const TILESET_PATH: &str = "tileset.png";
+const FRAME_DURATION: u128 = 100;
+
 pub fn run(png: &Path) -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
-    let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
+    let _image_context = sdl2::image::init(InitFlag::PNG)?;
     let window = video_subsystem.window("rust-sdl2 demo: Video", 800, 600)
         .position_centered()
         .build()
@@ -33,7 +35,7 @@ pub fn run(png: &Path) -> Result<(), String> {
                     _ => {}
                 }
             None => {
-                let frame = Instant::now().duration_since(t_0).as_millis() / 100 % 4;
+                let frame = Instant::now().duration_since(t_0).as_millis() / FRAME_DURATION % 4;
 
                 let src_rect = sdl2::rect::Rect::new(128 + 16 * frame as i32, 4, 16, 28);
                 let dst_rect = sdl2::rect::Rect::new(64, 112, 64, 112);
@@ -49,13 +51,7 @@ pub fn run(png: &Path) -> Result<(), String> {
 }
 
 fn main() -> Result<(), String> {
-    let args: Vec<_> = env::args().collect();
-
-    if args.len() < 2 {
-        println!("Usage: cargo run /path/to/image.(png|jpg)")
-    } else {
-        run(Path::new(&args[1]))?;
-    }
+    run(Path::new(TILESET_PATH))?;
 
     Ok(())
 }
