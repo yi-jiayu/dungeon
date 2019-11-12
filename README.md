@@ -16,3 +16,4 @@ Dungeon game using Rust and SDL2
 ## Acknowledgements
 
 * Sprites from https://0x72.itch.io/dungeontileset-ii
+* Font from https://magodev.itch.io/magosfonts
