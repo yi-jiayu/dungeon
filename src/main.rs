@@ -38,7 +38,7 @@ macro_rules! keyup (
                     })
 );
 
-pub fn run(png: &Path) -> Result<(), String> {
+pub fn run() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
     let _image_context = sdl2::image::init(InitFlag::PNG)?;
@@ -55,7 +55,7 @@ pub fn run(png: &Path) -> Result<(), String> {
         .build()
         .map_err(|e| e.to_string())?;
     let texture_creator = canvas.texture_creator();
-    let texture = texture_creator.load_texture(png)?;
+    let texture = texture_creator.load_texture(Path::new(TILESET_PATH))?;
 
     let font = ttf_context.load_font("mago1.ttf", 64)?;
     let font_surface = font
@@ -134,7 +134,7 @@ pub fn run(png: &Path) -> Result<(), String> {
 }
 
 fn main() -> Result<(), String> {
-    run(Path::new(TILESET_PATH))?;
+    run()?;
 
     Ok(())
 }
