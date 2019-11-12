@@ -3,17 +3,16 @@ use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::TextureQuery;
+use sdl2::render::{TextureQuery, WindowCanvas, Texture};
 use std::path::Path;
 use std::time::Instant;
 
+// Path to tileset
 const TILESET_PATH: &str = "tileset.png";
 
-#[derive(PartialEq)]
-enum Facing {
-    Left,
-    Right,
-}
+// Duration of a single animation frame in milliseconds
+const FRAME_DURATION: u128 = 100;
+
 
 // handle the annoying Rect i32
 macro_rules! rect (
@@ -34,6 +33,65 @@ macro_rules! keyup (
                         ..
                     })
 );
+
+#[derive(PartialEq)]
+enum Facing {
+    Left,
+    Right,
+}
+
+struct Character {
+    x: f64,
+    y: f64,
+    velocity_x: f64,
+    velocity_y: f64,
+    facing: Facing,
+    curr_frame: i32,
+    width: u32,
+    height: u32,
+    sprite_width: u32,
+    sprite_height: u32,
+    sprite_y: i32,
+    idle_sprite_offset: i32,
+    moving_sprite_offset: i32,
+    num_frames: i32,
+}
+
+impl Character {
+    fn pos_x(&self) -> i32 {
+        self.x.round() as i32
+    }
+
+    fn pos_y(&self) -> i32 {
+        self.y.round() as i32
+    }
+
+    fn is_moving(&self) -> bool {
+        self.velocity_x != 0.0 || self.velocity_y != 0.0
+    }
+
+    fn integrate(&mut self, t: u128, dt: u128) {
+        self.x += self.velocity_x * dt as f64;
+        self.y += self.velocity_y * dt as f64;
+        self.curr_frame = (t / FRAME_DURATION) as i32 % self.num_frames;
+    }
+
+    fn render_to(&self, texture: &Texture, canvas: &mut WindowCanvas) -> Result<(), String> {
+        let offset = if self.is_moving() { self.moving_sprite_offset } else { self.idle_sprite_offset };
+        let src_rect = rect!(offset + 16 * self.curr_frame, self.sprite_y, self.sprite_width, self.sprite_height);
+        let dst_rect = rect!(self.pos_x(), self.pos_y(), self.width, self.height);
+
+        canvas.copy_ex(
+            texture,
+            src_rect,
+            dst_rect,
+            0.,
+            None,
+            self.facing == Facing::Left,
+            false,
+        )
+    }
+}
 
 pub fn run() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -72,9 +130,6 @@ pub fn run() -> Result<(), String> {
     // Time step in milliseconds
     const DELTA_TIME: u128 = 1;
 
-    // Duration of a single animation frame in milliseconds
-    const FRAME_DURATION: u128 = 100;
-
     // Number of pixels to move per time step
     const VELOCITY: f64 = 0.3;
 
@@ -83,35 +138,46 @@ pub fn run() -> Result<(), String> {
     let mut current_time: u128 = 0;
     let mut accumulator: u128 = 0;
 
-    let mut curr_x = 64.0;
-    let mut curr_y = 112.0;
-    let mut velocity_x = 0.0;
-    let mut velocity_y = 0.0;
-    let mut facing = Facing::Right;
+    let mut character = Character {
+        x: 64.0,
+        y: 112.0,
+        velocity_x: 0.0,
+        width: 64,
+        height: 112,
+        facing: Facing::Right,
+        sprite_width: 16,
+        sprite_height: 28,
+        sprite_y: 4,
+        idle_sprite_offset: 128,
+        moving_sprite_offset: 192,
+        num_frames: 4,
+        velocity_y: 0.0,
+        curr_frame: 0,
+    };
 
     'mainloop: loop {
         if let Some(event) = sdl_context.event_pump()?.poll_event() {
             match event {
                 Event::Quit { .. } | keydown!(Escape) => break 'mainloop,
                 keydown!(Right) => {
-                    velocity_x = VELOCITY;
-                    facing = Facing::Right;
+                    character.velocity_x = VELOCITY;
+                    character.facing = Facing::Right;
                 }
                 keydown!(Left) => {
-                    velocity_x = -VELOCITY;
-                    facing = Facing::Left;
+                    character.velocity_x = -VELOCITY;
+                    character.facing = Facing::Left;
                 }
                 keydown!(Down) => {
-                    velocity_y = VELOCITY;
+                    character.velocity_y = VELOCITY;
                 }
                 keydown!(Up) => {
-                    velocity_y = -VELOCITY;
+                    character.velocity_y = -VELOCITY;
                 }
                 keyup!(Left) | keyup!(Right) => {
-                    velocity_x = 0.0;
+                    character.velocity_x = 0.0;
                 }
                 keyup!(Up) | keyup!(Down) => {
-                    velocity_y = 0.0;
+                    character.velocity_y = 0.0;
                 }
                 _ => {}
             }
@@ -123,29 +189,15 @@ pub fn run() -> Result<(), String> {
         accumulator += frame_time;
 
         while accumulator >= DELTA_TIME {
-            curr_x += velocity_x;
-            curr_y += velocity_y;
+            character.integrate(t, DELTA_TIME);
             accumulator -= DELTA_TIME;
             t += DELTA_TIME;
         }
 
-        let frame = t / FRAME_DURATION % 4;
-        let moving = velocity_x != 0.0 || velocity_y != 0.0;
-        let offset = if moving { 192 } else { 128 };
-        let src_rect = rect!(offset + 16 * frame as i32, 4, 16, 28);
-        let dst_rect = rect!(curr_x.round() as i32, curr_y.round() as i32, 64, 112);
-
         canvas.clear();
+        character.render_to(&texture, &mut canvas)?;
         canvas.copy(&font_texture, None, font_rect)?;
-        canvas.copy_ex(
-            &texture,
-            src_rect,
-            dst_rect,
-            0.,
-            None,
-            facing == Facing::Left,
-            false,
-        )?;
+
         canvas.present();
     }
 
