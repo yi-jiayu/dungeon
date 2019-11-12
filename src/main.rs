@@ -179,6 +179,30 @@ pub fn run() -> Result<(), String> {
                 keyup!(Up) | keyup!(Down) => {
                     character.velocity_y = 0.0;
                 }
+                keyup!(Num1) => {
+                    character.sprite_y = 4;
+                }
+                keyup!(Num2) => {
+                    character.sprite_y = 36;
+                }
+                keyup!(Num3) => {
+                    character.sprite_y = 68;
+                }
+                keyup!(Num4) => {
+                    character.sprite_y = 100;
+                }
+                keyup!(Num5) => {
+                    character.sprite_y = 132;
+                }
+                keyup!(Num6) => {
+                    character.sprite_y = 164;
+                }
+                keyup!(Num7) => {
+                    character.sprite_y = 196;
+                }
+                keyup!(Num8) => {
+                    character.sprite_y = 228;
+                }
                 _ => {}
             }
         }
