@@ -21,8 +21,21 @@ enum Facing {
 // handle the annoying Rect i32
 macro_rules! rect (
     ($x:expr, $y:expr, $w:expr, $h:expr) => (
-        Rect::new($x as i32, $y as i32, $w as u32, $h as u32)
-    )
+        Rect::new($x as i32, $y as i32, $w as u32, $h as u32))
+);
+
+macro_rules! keydown (
+    ($key:ident) => (Event::KeyDown {
+                        keycode: Option::Some(Keycode::$key),
+                        ..
+                    })
+);
+
+macro_rules! keyup (
+    ($key:ident) => (Event::KeyUp {
+                        keycode: Option::Some(Keycode::$key),
+                        ..
+                    })
 );
 
 pub fn run(png: &Path) -> Result<(), String> {
@@ -69,57 +82,26 @@ pub fn run(png: &Path) -> Result<(), String> {
         let event = sdl_context.event_pump()?.poll_event();
         match event {
             Some(event) => match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Option::Some(Keycode::Escape),
-                    ..
-                } => break 'mainloop,
-                Event::KeyDown {
-                    keycode: Option::Some(Keycode::Right),
-                    ..
-                } => {
+                Event::Quit { .. } | keydown!(Escape) => break 'mainloop,
+                keydown!(Right) => {
                     curr_x += 4;
                     facing = Facing::Right;
                     moving = true;
                 }
-                Event::KeyDown {
-                    keycode: Option::Some(Keycode::Left),
-                    ..
-                } => {
+                keydown!(Left) => {
                     curr_x -= 4;
                     facing = Facing::Left;
                     moving = true;
                 }
-                Event::KeyDown {
-                    keycode: Option::Some(Keycode::Down),
-                    ..
-                } => {
+                keydown!(Down) => {
                     curr_y += 4;
                     moving = true;
                 }
-                Event::KeyDown {
-                    keycode: Option::Some(Keycode::Up),
-                    ..
-                } => {
+                keydown!(Up) => {
                     curr_y -= 4;
                     moving = true;
                 }
-                Event::KeyUp {
-                    keycode: Option::Some(Keycode::Up),
-                    ..
-                }
-                | Event::KeyUp {
-                    keycode: Option::Some(Keycode::Down),
-                    ..
-                }
-                | Event::KeyUp {
-                    keycode: Option::Some(Keycode::Left),
-                    ..
-                }
-                | Event::KeyUp {
-                    keycode: Option::Some(Keycode::Right),
-                    ..
-                } => {
+                keyup!(Up) | keyup!(Down) | keyup!(Left) | keyup!(Right) => {
                     moving = false;
                 }
                 _ => {}
