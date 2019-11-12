@@ -11,6 +11,12 @@ use sdl2::render::TextureQuery;
 const TILESET_PATH: &str = "tileset.png";
 const FRAME_DURATION: u128 = 100;
 
+#[derive(PartialEq)]
+enum Facing {
+    Left,
+    Right,
+}
+
 pub fn run(png: &Path) -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -36,6 +42,7 @@ pub fn run(png: &Path) -> Result<(), String> {
     let t_0 = Instant::now();
     let mut curr_x = 64;
     let mut curr_y = 112;
+    let mut facing = Facing::Right;
 
     'mainloop: loop {
         let event = sdl_context.event_pump()?.poll_event();
@@ -47,9 +54,11 @@ pub fn run(png: &Path) -> Result<(), String> {
                         break 'mainloop,
                     Event::KeyDown { keycode: Option::Some(Keycode::Right), .. } => {
                         curr_x += 4;
+                        facing = Facing::Right;
                     }
                     Event::KeyDown { keycode: Option::Some(Keycode::Left), .. } => {
                         curr_x -= 4;
+                        facing = Facing::Left;
                     }
                     Event::KeyDown { keycode: Option::Some(Keycode::Down), .. } => {
                         curr_y += 4;
@@ -67,7 +76,7 @@ pub fn run(png: &Path) -> Result<(), String> {
 
                 canvas.clear();
                 canvas.copy(&font_texture, None, font_rect)?;
-                canvas.copy(&texture, src_rect, dst_rect)?;
+                canvas.copy_ex(&texture, src_rect, dst_rect, 0., None, facing == Facing::Left, false)?;
                 canvas.present();
             }
         }
