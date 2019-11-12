@@ -8,7 +8,6 @@ use std::path::Path;
 use std::time::Instant;
 
 const TILESET_PATH: &str = "tileset.png";
-const FRAME_DURATION: u128 = 100;
 
 #[derive(PartialEq)]
 enum Facing {
@@ -70,11 +69,24 @@ pub fn run() -> Result<(), String> {
     } = font_texture.query();
     let font_rect = rect!(0, 0, font_width, font_height);
 
+    // Time step in milliseconds
+    const DELTA_TIME: u128 = 1;
+
+    // Duration of a single animation frame in milliseconds
+    const FRAME_DURATION: u128 = 100;
+
+    // Number of pixels to move per time step
+    const VELOCITY: f64 = 0.3;
+
     let t_0 = Instant::now();
-    let mut curr_x = 64;
-    let mut curr_y = 112;
-    let mut velocity_x = 0;
-    let mut velocity_y = 0;
+    let mut t: u128 = 0;
+    let mut current_time: u128 = 0;
+    let mut accumulator: u128 = 0;
+
+    let mut curr_x = 64.0;
+    let mut curr_y = 112.0;
+    let mut velocity_x = 0.0;
+    let mut velocity_y = 0.0;
     let mut facing = Facing::Right;
 
     'mainloop: loop {
@@ -82,36 +94,46 @@ pub fn run() -> Result<(), String> {
             match event {
                 Event::Quit { .. } | keydown!(Escape) => break 'mainloop,
                 keydown!(Right) => {
-                    velocity_x = 1;
+                    velocity_x = VELOCITY;
                     facing = Facing::Right;
                 }
                 keydown!(Left) => {
-                    velocity_x = -1;
+                    velocity_x = -VELOCITY;
                     facing = Facing::Left;
                 }
                 keydown!(Down) => {
-                    velocity_y = 1;
+                    velocity_y = VELOCITY;
                 }
                 keydown!(Up) => {
-                    velocity_y = -1;
+                    velocity_y = -VELOCITY;
                 }
                 keyup!(Left) | keyup!(Right) => {
-                    velocity_x = 0;
+                    velocity_x = 0.0;
                 }
                 keyup!(Up) | keyup!(Down) => {
-                    velocity_y = 0;
+                    velocity_y = 0.0;
                 }
                 _ => {}
             }
         }
-        let frame = Instant::now().duration_since(t_0).as_millis() / FRAME_DURATION % 4;
 
-        curr_x += 2 * velocity_x;
-        curr_y += 2 * velocity_y;
-        let moving = velocity_x > 0 || velocity_y > 0;
+        let new_time = Instant::now().duration_since(t_0).as_millis();
+        let frame_time = new_time - current_time;
+        current_time = new_time;
+        accumulator += frame_time;
+
+        while accumulator >= DELTA_TIME {
+            curr_x += velocity_x;
+            curr_y += velocity_y;
+            accumulator -= DELTA_TIME;
+            t += DELTA_TIME;
+        }
+
+        let frame = t / FRAME_DURATION % 4;
+        let moving = velocity_x != 0.0 || velocity_y != 0.0;
         let offset = if moving { 192 } else { 128 };
         let src_rect = rect!(offset + 16 * frame as i32, 4, 16, 28);
-        let dst_rect = rect!(curr_x, curr_y, 64, 112);
+        let dst_rect = rect!(curr_x.round() as i32, curr_y.round() as i32, 64, 112);
 
         canvas.clear();
         canvas.copy(&font_texture, None, font_rect)?;
