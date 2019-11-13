@@ -251,8 +251,8 @@ pub fn run() -> Result<(), String> {
 
         canvas.clear();
 
-        character.render_to(&mut canvas)?;
         render_text(character_name, &font, &texture_creator, &mut canvas)?;
+        character.render_to(&mut canvas)?;
 
         canvas.present();
     }
