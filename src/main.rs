@@ -105,26 +105,30 @@ impl Character<'_> {
     }
 }
 
-fn render_text(
-    text: &str,
-    font: &Font,
-    texture_creator: &TextureCreator<WindowContext>,
-    canvas: &mut WindowCanvas,
-) -> Result<(), String> {
-    let font_surface = font
-        .render(text)
-        .blended(Color::RGBA(255, 0, 0, 255))
-        .map_err(|e| e.to_string())?;
-    let font_texture = texture_creator
-        .create_texture_from_surface(&font_surface)
-        .map_err(|e| e.to_string())?;
-    let TextureQuery {
-        width: font_width,
-        height: font_height,
-        ..
-    } = font_texture.query();
-    let font_rect = rect!(16, 0, font_width, font_height);
-    canvas.copy(&font_texture, None, font_rect)
+struct TextRenderer<'a> {
+    font: &'a Font<'a, 'a>,
+    texture_creator: &'a TextureCreator<WindowContext>,
+}
+
+impl TextRenderer<'_> {
+    fn render(&self, text: &str, canvas: &mut WindowCanvas) -> Result<(), String> {
+        let font_surface = self
+            .font
+            .render(text)
+            .blended(Color::RGBA(255, 0, 0, 255))
+            .map_err(|e| e.to_string())?;
+        let font_texture = self
+            .texture_creator
+            .create_texture_from_surface(&font_surface)
+            .map_err(|e| e.to_string())?;
+        let TextureQuery {
+            width: font_width,
+            height: font_height,
+            ..
+        } = font_texture.query();
+        let font_rect = rect!(16, 0, font_width, font_height);
+        canvas.copy(&font_texture, None, font_rect)
+    }
 }
 
 pub fn run() -> Result<(), String> {
@@ -159,6 +163,10 @@ pub fn run() -> Result<(), String> {
     let mut current_time: u128 = 0;
     let mut accumulator: u128 = 0;
 
+    let text_renderer = TextRenderer {
+        font: &font,
+        texture_creator: &texture_creator,
+    };
     let mut character = Character {
         x: 64.0,
         y: 112.0,
@@ -251,7 +259,7 @@ pub fn run() -> Result<(), String> {
 
         canvas.clear();
 
-        render_text(character_name, &font, &texture_creator, &mut canvas)?;
+        text_renderer.render(character_name, &mut canvas)?;
         character.render_to(&mut canvas)?;
 
         canvas.present();
