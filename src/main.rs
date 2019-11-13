@@ -266,6 +266,10 @@ pub fn run() -> Result<(), String> {
         text_renderer.render(character_name, &mut canvas)?;
         character.render_to(&mut canvas)?;
 
+        let src_rect = rect!(32, 112, 32, 64);
+        let dst_rect = rect!(256, 112, 128, 256);
+        canvas.copy(&sprite_sheet, src_rect, dst_rect)?;
+
         canvas.present();
     }
 
