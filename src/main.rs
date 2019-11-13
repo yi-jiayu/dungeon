@@ -3,7 +3,7 @@ use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::{TextureQuery, WindowCanvas, Texture};
+use sdl2::render::{Texture, TextureQuery, WindowCanvas};
 use std::path::Path;
 use std::time::Instant;
 
@@ -12,7 +12,6 @@ const TILESET_PATH: &str = "tileset.png";
 
 // Duration of a single animation frame in milliseconds
 const FRAME_DURATION: u128 = 100;
-
 
 // handle the annoying Rect i32
 macro_rules! rect (
@@ -40,7 +39,8 @@ enum Facing {
     Right,
 }
 
-struct Character {
+//noinspection RsWrongLifetimeParametersNumber
+struct Character<'a> {
     x: f64,
     y: f64,
     velocity_x: f64,
@@ -49,6 +49,7 @@ struct Character {
     curr_frame: i32,
     width: u32,
     height: u32,
+    sprite_sheet: &'a Texture<'a>,
     sprite_width: u32,
     sprite_height: u32,
     sprite_y: i32,
@@ -57,7 +58,7 @@ struct Character {
     num_frames: i32,
 }
 
-impl Character {
+impl Character<'_> {
     fn pos_x(&self) -> i32 {
         self.x.round() as i32
     }
@@ -76,13 +77,22 @@ impl Character {
         self.curr_frame = (t / FRAME_DURATION) as i32 % self.num_frames;
     }
 
-    fn render_to(&self, texture: &Texture, canvas: &mut WindowCanvas) -> Result<(), String> {
-        let offset = if self.is_moving() { self.moving_sprite_offset } else { self.idle_sprite_offset };
-        let src_rect = rect!(offset + 16 * self.curr_frame, self.sprite_y, self.sprite_width, self.sprite_height);
+    fn render_to(&self, canvas: &mut WindowCanvas) -> Result<(), String> {
+        let offset = if self.is_moving() {
+            self.moving_sprite_offset
+        } else {
+            self.idle_sprite_offset
+        };
+        let src_rect = rect!(
+            offset + 16 * self.curr_frame,
+            self.sprite_y,
+            self.sprite_width,
+            self.sprite_height
+        );
         let dst_rect = rect!(self.pos_x(), self.pos_y(), self.width, self.height);
 
         canvas.copy_ex(
-            texture,
+            self.sprite_sheet,
             src_rect,
             dst_rect,
             0.,
@@ -110,7 +120,7 @@ pub fn run() -> Result<(), String> {
         .build()
         .map_err(|e| e.to_string())?;
     let texture_creator = canvas.texture_creator();
-    let texture = texture_creator.load_texture(Path::new(TILESET_PATH))?;
+    let sprite_sheet = texture_creator.load_texture(Path::new(TILESET_PATH))?;
 
     let font = ttf_context.load_font("mago1.ttf", 64)?;
     let font_surface = font
@@ -153,6 +163,7 @@ pub fn run() -> Result<(), String> {
         num_frames: 4,
         velocity_y: 0.0,
         curr_frame: 0,
+        sprite_sheet: &sprite_sheet,
     };
 
     'mainloop: loop {
@@ -219,7 +230,7 @@ pub fn run() -> Result<(), String> {
         }
 
         canvas.clear();
-        character.render_to(&texture, &mut canvas)?;
+        character.render_to(&mut canvas)?;
         canvas.copy(&font_texture, None, font_rect)?;
 
         canvas.present();
