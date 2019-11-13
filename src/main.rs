@@ -140,7 +140,7 @@ pub fn run() -> Result<(), String> {
 
     let mut canvas = window
         .into_canvas()
-        .software()
+        .accelerated()
         .build()
         .map_err(|e| e.to_string())?;
     let texture_creator = canvas.texture_creator();
