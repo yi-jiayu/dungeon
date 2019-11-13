@@ -3,7 +3,9 @@ use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::{Texture, TextureQuery, WindowCanvas};
+use sdl2::render::{Texture, TextureCreator, TextureQuery, WindowCanvas};
+use sdl2::ttf::Font;
+use sdl2::video::WindowContext;
 use std::path::Path;
 use std::time::Instant;
 
@@ -103,6 +105,28 @@ impl Character<'_> {
     }
 }
 
+fn render_text(
+    text: &str,
+    font: &Font,
+    texture_creator: &TextureCreator<WindowContext>,
+    canvas: &mut WindowCanvas,
+) -> Result<(), String> {
+    let font_surface = font
+        .render(text)
+        .blended(Color::RGBA(255, 0, 0, 255))
+        .map_err(|e| e.to_string())?;
+    let font_texture = texture_creator
+        .create_texture_from_surface(&font_surface)
+        .map_err(|e| e.to_string())?;
+    let TextureQuery {
+        width: font_width,
+        height: font_height,
+        ..
+    } = font_texture.query();
+    let font_rect = rect!(0, 0, font_width, font_height);
+    canvas.copy(&font_texture, None, font_rect)
+}
+
 pub fn run() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -123,19 +147,6 @@ pub fn run() -> Result<(), String> {
     let sprite_sheet = texture_creator.load_texture(Path::new(TILESET_PATH))?;
 
     let font = ttf_context.load_font("mago1.ttf", 64)?;
-    let font_surface = font
-        .render("Hello Rust!")
-        .blended(Color::RGBA(255, 0, 0, 255))
-        .map_err(|e| e.to_string())?;
-    let font_texture = texture_creator
-        .create_texture_from_surface(&font_surface)
-        .map_err(|e| e.to_string())?;
-    let TextureQuery {
-        width: font_width,
-        height: font_height,
-        ..
-    } = font_texture.query();
-    let font_rect = rect!(0, 0, font_width, font_height);
 
     // Time step in milliseconds
     const DELTA_TIME: u128 = 1;
@@ -165,6 +176,7 @@ pub fn run() -> Result<(), String> {
         curr_frame: 0,
         sprite_sheet: &sprite_sheet,
     };
+    let mut character_name = "Elf (F)";
 
     'mainloop: loop {
         if let Some(event) = sdl_context.event_pump()?.poll_event() {
@@ -192,27 +204,35 @@ pub fn run() -> Result<(), String> {
                 }
                 keyup!(Num1) => {
                     character.sprite_y = 4;
+                    character_name = "Elf (F)";
                 }
                 keyup!(Num2) => {
                     character.sprite_y = 36;
+                    character_name = "Elf (M)";
                 }
                 keyup!(Num3) => {
                     character.sprite_y = 68;
+                    character_name = "Knight (F)";
                 }
                 keyup!(Num4) => {
                     character.sprite_y = 100;
+                    character_name = "Knight (M)";
                 }
                 keyup!(Num5) => {
                     character.sprite_y = 132;
+                    character_name = "Wizard (F)";
                 }
                 keyup!(Num6) => {
                     character.sprite_y = 164;
+                    character_name = "Wizard (M)";
                 }
                 keyup!(Num7) => {
                     character.sprite_y = 196;
+                    character_name = "Lizard (F)";
                 }
                 keyup!(Num8) => {
                     character.sprite_y = 228;
+                    character_name = "Lizard (M)";
                 }
                 _ => {}
             }
@@ -230,8 +250,9 @@ pub fn run() -> Result<(), String> {
         }
 
         canvas.clear();
+
         character.render_to(&mut canvas)?;
-        canvas.copy(&font_texture, None, font_rect)?;
+        render_text(character_name, &font, &texture_creator, &mut canvas)?;
 
         canvas.present();
     }
