@@ -123,7 +123,7 @@ fn render_text(
         height: font_height,
         ..
     } = font_texture.query();
-    let font_rect = rect!(0, 0, font_width, font_height);
+    let font_rect = rect!(16, 0, font_width, font_height);
     canvas.copy(&font_texture, None, font_rect)
 }
 
