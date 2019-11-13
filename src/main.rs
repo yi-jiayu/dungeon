@@ -1,9 +1,10 @@
 use sdl2::event::Event;
-use sdl2::image::{InitFlag, LoadTexture};
+use sdl2::image::{InitFlag, LoadSurface, LoadTexture};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, TextureCreator, TextureQuery, WindowCanvas};
+use sdl2::surface::Surface;
 use sdl2::ttf::Font;
 use sdl2::video::WindowContext;
 use std::path::Path;
@@ -136,11 +137,14 @@ pub fn run() -> Result<(), String> {
     let video_subsystem = sdl_context.video()?;
     let _image_context = sdl2::image::init(InitFlag::PNG)?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
-    let window = video_subsystem
+    let mut window = video_subsystem
         .window("rust-sdl2 demo: Video", 800, 600)
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
+    let window_icon = Surface::from_file(Path::new("icon.png"))?;
+    window.set_icon(window_icon);
+    let window = window;
 
     let mut canvas = window
         .into_canvas()
